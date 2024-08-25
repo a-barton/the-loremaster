@@ -2,3 +2,16 @@ aiohttp
 aiosqlite
 discord.py
 python-dotenv
+requests
+langchain
+langchain-community
+langchain-huggingface
+pypdf
+pdfminer.six
+tiktoken
+pandas
+beautifulsoup4
+openai
+psycopg2-binary
+pgvector
+llama-cpp-python
