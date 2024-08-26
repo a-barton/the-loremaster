@@ -17,16 +17,16 @@ DATABASE_URL = NOTION_BASE_URL + "/databases/{database_id}/query"
 PAGE_URL = NOTION_BASE_URL + "/pages/{page_id}"
 BLOCK_URL = NOTION_BASE_URL + "/blocks/{block_id}/children"
 QUERY_DICT = {
-    "filter": {
-        "or": [
-            {
-                "property": "Name",
-                "rich_text": {
-                    "contains": "Returning the lute"
-                }
-            }
-        ]
-    },
+    # "filter": {
+    #     "or": [
+    #         {
+    #             "property": "Name",
+    #             "rich_text": {
+    #                 "contains": "Returning the lute"
+    #             }
+    #         }
+    #     ]
+    # },
     "page_size": 100,
 }
 
@@ -185,7 +185,6 @@ class MyNotionDBLoader(BaseLoader):
                 method="POST",
                 query_dict=query_dict,
             )
-            print(data)
 
             pages.extend(data.get("results"))
 

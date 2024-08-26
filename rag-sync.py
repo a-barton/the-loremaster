@@ -1,5 +1,7 @@
 import os
 from typing import Any
+import pgvector
+import psycopg2
 from dotenv import load_dotenv
 
 from langchain.chains.llm import LLMChain
@@ -18,23 +20,22 @@ prompt_template = """SYSTEM: You are a loremaster with knowledge of the setting 
 ---
 Stylise your answers as though you are roleplaying a wise old sage or loremaster who is providing wisdom to fantasy characters in the Dungeons and Dragons campaign.
 Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Ensure the answer fits within a 2000 character limit, and try to avoid starting every answer with "Ah, ...".
 
 {context}
 
 Question: {question}
-Loremaster's Answer:"""
+Helpful Answer:"""
 QA_PROMPT = PromptTemplate(
     template=prompt_template, input_variables=["context", "question"]
 )
 
-async def prompt_rag_flow(query,
-       model_name="gpt-4o",
-       temperature=0.5,
-       k=5,
-       search_type="similarity",
-       history="",
-       verbose=False
+def qa(query,
+       model_name,
+       temperature,
+       k,
+       search_type,
+       history,
+       verbose
        ) -> dict[str, Any]:
 
     load_dotenv()
@@ -80,3 +81,16 @@ async def prompt_rag_flow(query,
     result = qa({"question": query, "chat_history": history})
 
     return result["answer"]
+
+if __name__ == "__main__":
+    query = "What powerful artifact did Tandris gift to Veren?"
+    response = qa(
+        query=query,
+        model_name="gpt-4o",
+        temperature=0.7,
+        k=3,
+        search_type="similarity",
+        history="",
+        verbose=True,
+    )
+    print(response)

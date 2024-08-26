@@ -13,6 +13,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
+from .llm_flow.rag import prompt_rag_flow
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
@@ -107,6 +108,25 @@ class General(commands.Cog, name="general"):
             color=0xBEBEFE,
         )
         await context.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="lore",
+        description="Ask the Loremaster something about The Red Moon Saga."
+    )
+    async def lore(self, context: Context):
+        question = context.message.content.split("lore", 1)[1]
+        response = await prompt_rag_flow(question)
+        reply_content = f"```{response}```"
+        message_max_length = 2000
+        if len(response) > (message_max_length - 6): #subtract 6 characters for backticks to put content in quote block
+            trimmed_response = response[:message_max_length-6]
+            last_full_stop_idx = trimmed_response.rfind(".")
+            trimmed_response = trimmed_response[:last_full_stop_idx + 1]
+            reply_content = f"```{trimmed_response}```"
+        
+        await context.message.reply(reply_content)
+                            
+
 
 async def setup(bot) -> None:
     await bot.add_cog(General(bot))

@@ -29,7 +29,6 @@ def load_pgvector(args):
 
     """Split documents into chunks"""
     chunked_docs = split_documents(original_docs)
-    print(chunked_docs)
 
     """Embed vectors"""
     embeddings_model = HuggingFaceEmbeddings()
@@ -47,9 +46,3 @@ def load_pgvector(args):
     doc_ids = [uuid.uuid4().hex for _ in range(len(chunked_docs))]
     documents_with_ids = [Document(page_content=doc.page_content, metadata={'id': doc_id}) for doc, doc_id in zip(original_docs, doc_ids)]
     db.add_documents(documents_with_ids)
-
-    similar = db.similarity_search_with_score("What artifact did Tandris give Veren?", k=3)
-    print("SIMILARITY SEARCH RESULTS:")
-    print(similar)
-
-    print("Finished loading documents")
