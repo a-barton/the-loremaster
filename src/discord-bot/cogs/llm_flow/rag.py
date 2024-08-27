@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, Dict
 from dotenv import load_dotenv
 
 from langchain.chains.llm import LLMChain
@@ -35,7 +35,7 @@ async def prompt_rag_flow(query,
        search_type="similarity",
        history="",
        verbose=False
-       ) -> dict[str, Any]:
+       ) -> Dict[str, Any]:
 
     load_dotenv()
     COLLECTION_NAME = os.getenv("COLLECTION_NAME")
