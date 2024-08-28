@@ -29,13 +29,13 @@ QA_PROMPT = PromptTemplate(
 )
 
 async def prompt_rag_flow(query,
-       model_name="gpt-4o",
-       temperature=0.5,
-       k=5,
-       search_type="similarity",
-       history="",
-       verbose=False
-       ) -> Dict[str, Any]:
+    model_name="gpt-4o",
+    temperature=0.5,
+    k=5,
+    search_type="similarity",
+    history="",
+    verbose=False
+    ) -> Dict[str, Any]:
 
     load_dotenv()
     COLLECTION_NAME = os.getenv("COLLECTION_NAME")
