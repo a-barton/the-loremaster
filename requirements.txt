@@ -14,4 +14,4 @@ beautifulsoup4
 openai
 psycopg2-binary
 pgvector
-llama-cpp-python
+#llama-cpp-python
