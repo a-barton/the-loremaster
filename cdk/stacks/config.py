@@ -27,7 +27,7 @@ class ConfigStack(Stack):
             for line in env_file:
                 key, value = line.strip().split("=")
                 if "POSTGRES" in key:
-                    continue
+                    continue  # Ignore local POSTGRES related .env variables - the storage stack will create fresh Postgres creds for RDS
                 param_name = f"{self.app_name}SSMSecret{key.replace('SECRET__', '')}"
                 if line.startswith("SECRET__"):
                     if not self.check_param_exists(param_name):

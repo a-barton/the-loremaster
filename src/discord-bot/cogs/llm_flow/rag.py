@@ -41,8 +41,11 @@ async def prompt_rag_flow(
 
     load_dotenv()
     COLLECTION_NAME = os.getenv("COLLECTION_NAME")
-    POSTGRES_PASSWORD = os.getenv("SECRET__POSTGRES_PASSWORD")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_DBNAME = os.getenv("POSTGRES_DBNAME")
     POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 
     """Establish vector DB and retriever"""
     embeddings = HuggingFaceEmbeddings()
@@ -50,7 +53,7 @@ async def prompt_rag_flow(
     vectors = PGVector.from_existing_index(
         embedding=embeddings,
         collection_name=collection_name,
-        connection_string=f"postgresql+psycopg2://postgres:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:5432/postgres",
+        connection_string=f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DBNAME}",
     )
     retriever = vectors.as_retriever(search_type=search_type, search_kwargs={"k": k})
 

@@ -3,6 +3,7 @@ from aws_cdk import (
     Stack,
     aws_ecs as ecs,
     aws_iam as iam,
+    aws_ec2 as ec2,
 )
 from constructs import Construct
 from .config import ConfigStack
@@ -81,14 +82,14 @@ class ECS(Construct):
             f"{self.app_name}TaskDefinition",
         )
 
-        print({key: param.string_value for key, param in config.env_vars.items()})
         self.task_definition.add_container(
             f"{self.app_name}Container",
-            image=ecs.ContainerImage.from_asset(
-                directory=os.path.join(
-                    os.path.dirname(__file__), "..", ".."
-                )  # Reference Dockerfile in root of repo
-            ),
+            # image=ecs.ContainerImage.from_asset(
+            #     directory=os.path.join(
+            #         os.path.dirname(__file__), "..", ".."
+            #     )  # Reference Dockerfile in root of repo
+            # ),
+            image=ecs.ContainerImage.from_registry("docker.io/python:3.9-slim-buster"),
             container_name=self.app_name,
             memory_limit_mib=512,
             cpu=256,
@@ -118,8 +119,11 @@ class ECS(Construct):
             },
         )
 
-        for secret in config.secrets.values():
-            self.task_definition.container_definitions[0].add_secret(secret)
+        for ssm_secure_param in config.secrets.values():
+            self.task_definition.default_container.add_secret(
+                name=ssm_secure_param.parameter_name,
+                secret=ecs.Secret.from_ssm_parameter(ssm_secure_param),
+            )
 
         self.fargate_service = ecs.FargateService(
             self,
@@ -128,7 +132,9 @@ class ECS(Construct):
             task_definition=self.task_definition,
             desired_count=1,
             security_groups=[self.security_groups.ecs_sg],
-            vpc_subnets=networking.vpc_construct.vpc.public_subnets,
+            vpc_subnets=ec2.SubnetSelection(
+                subnets=networking.vpc_construct.vpc.public_subnets
+            ),
             assign_public_ip=False,
             enable_execute_command=True,
         )

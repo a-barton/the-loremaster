@@ -94,6 +94,7 @@ class SecurityGroupConstruct(Construct):
             security_group_name=name,
             description=description,
             vpc=self.vpc,
+            allow_all_outbound=False,
         )
 
     def add_sg_rules(self):

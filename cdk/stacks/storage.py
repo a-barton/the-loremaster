@@ -2,6 +2,7 @@ from aws_cdk import (
     Stack,
     aws_rds as rds,
     aws_secretsmanager as secretsmanager,
+    Duration,
     aws_ec2 as ec2,
     RemovalPolicy,
     aws_iam as iam,
@@ -53,6 +54,9 @@ class StorageStack(Stack):
             ),
         )
 
+        print(networking.vpc_construct.vpc.isolated_subnets)
+        for subnet in networking.vpc_construct.vpc.isolated_subnets:
+            print(subnet)
         self.rds_cluster = rds.ServerlessCluster(
             self,
             f"{self.app_name}RDSCluster",
@@ -65,9 +69,13 @@ class StorageStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
             default_database_name=dbname,
             vpc_subnets=ec2.SubnetSelection(
-                subnets=networking.vpc_construct.vpc.private_subnets,
+                subnets=networking.vpc_construct.vpc.isolated_subnets,
             ),
             security_groups=[networking.security_groups.rds_sg],
+            scaling=rds.ServerlessScalingOptions(
+                auto_pause=Duration.minutes(5),
+                max_capacity=rds.AuroraCapacityUnit.ACU_2,
+            ),
         )
 
     def create_pgvector_installation_custom_resource(

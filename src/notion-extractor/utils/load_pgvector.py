@@ -16,9 +16,19 @@ from .load_util import split_documents
 
 def load_pgvector(args):
     """Fetch documents from Notion"""
+
+    SECRET__NOTION_TOKEN = os.getenv("SECRET__NOTION_TOKEN")
+    NOTION_DATABASE_ID = os.getenv("NOTION_DATABASE_ID")
+    COLLECTION_NAME = os.getenv("COLLECTION_NAME")
+    POSTGRES_USER = os.getenv("POSTGRES_USER")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+    POSTGRES_DBNAME = os.getenv("POSTGRES_DBNAME")
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+
     notion_loader = MyNotionDBLoader(
-        os.getenv("SECRET__NOTION_TOKEN"),
-        os.getenv("NOTION_DATABASE_ID"),
+        SECRET__NOTION_TOKEN,
+        NOTION_DATABASE_ID,
         args.verbose,
         validate_missing_content=True,
         validate_missing_metadata=["id"],
@@ -33,12 +43,11 @@ def load_pgvector(args):
     """Embed vectors"""
     embeddings_model = HuggingFaceEmbeddings()
 
-    connection_string = f"postgresql+psycopg2://postgres:{os.getenv('SECRET__POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:5432/postgres"
-    collection_name = os.getenv("COLLECTION_NAME")
+    connection_string = f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DBNAME}"
     db = PGVector.from_documents(
         embedding=embeddings_model,
         documents=chunked_docs,  # [d for d in chunked_docs],
-        collection_name=collection_name,
+        collection_name=COLLECTION_NAME,
         connection_string=connection_string,
     )
 
