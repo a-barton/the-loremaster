@@ -10,9 +10,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 
 
-def split_documents(documents,
-                    verbose=False
-                    ) -> List[Document]:
+def split_documents(documents, verbose=False) -> List[Document]:
     clean_documents = [replace_non_ascii(doc) for doc in documents]
 
     # The default list of separators is ["\n\n", "\n", " ", ""]
@@ -20,7 +18,21 @@ def split_documents(documents,
         chunk_size=int(os.getenv("CHUNK_SIZE")),
         chunk_overlap=int(os.getenv("CHUNK_OVERLAP")),
         length_function=len,
-        separators=["---", "####", "####", "##", "#", "\n\n\n", "\n\n", "\n", ".", "?", "!", " ", ""],
+        separators=[
+            "---",
+            "####",
+            "####",
+            "##",
+            "#",
+            "\n\n\n",
+            "\n\n",
+            "\n",
+            ".",
+            "?",
+            "!",
+            " ",
+            "",
+        ],
     )
 
     document_chunks = text_splitter.split_documents(clean_documents)
@@ -37,10 +49,11 @@ def replace_non_ascii(doc: Document) -> Document:
     """
     Replaces non-ascii characters with ascii characters
     """
-    page_content = doc.page_content \
-        .replace("\ue05c", "fi") \
-        .replace("\ufb01", "fi") \
-        .replace("\x00", " ") \
-        .replace('\u0000', " ")
+    page_content = (
+        doc.page_content.replace("\ue05c", "fi")
+        .replace("\ufb01", "fi")
+        .replace("\x00", " ")
+        .replace("\u0000", " ")
+    )
     page_content_ascii = page_content.encode("ascii", "ignore").decode()
     return Document(page_content=page_content_ascii, metadata=doc.metadata)

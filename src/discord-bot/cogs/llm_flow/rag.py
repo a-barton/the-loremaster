@@ -28,39 +28,44 @@ QA_PROMPT = PromptTemplate(
     template=prompt_template, input_variables=["context", "question"]
 )
 
-async def prompt_rag_flow(query,
+
+async def prompt_rag_flow(
+    query,
     model_name="gpt-4o",
     temperature=0.5,
     k=5,
     search_type="similarity",
     history="",
-    verbose=False
-    ) -> Dict[str, Any]:
+    verbose=False,
+) -> Dict[str, Any]:
 
     load_dotenv()
     COLLECTION_NAME = os.getenv("COLLECTION_NAME")
-    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-    POSTGRES_HOST = os.getenv('POSTGRES_HOST')
+    POSTGRES_PASSWORD = os.getenv("SECRET__POSTGRES_PASSWORD")
+    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 
     """Establish vector DB and retriever"""
     embeddings = HuggingFaceEmbeddings()
     collection_name = COLLECTION_NAME
     vectors = PGVector.from_existing_index(
-        embedding=embeddings, 
-        collection_name=collection_name, 
-        connection_string=f"postgresql+psycopg2://postgres:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:5432/postgres"
+        embedding=embeddings,
+        collection_name=collection_name,
+        connection_string=f"postgresql+psycopg2://postgres:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:5432/postgres",
     )
-    retriever = vectors.as_retriever(search_type=search_type, search_kwargs={'k': k})
+    retriever = vectors.as_retriever(search_type=search_type, search_kwargs={"k": k})
 
     # Construct a ConversationalRetrievalChain with a streaming llm for combine docs
     # and a separate, non-streaming llm for question generation
     llm = ChatOpenAI(temperature=temperature, model_name=model_name)
-    streaming_llm = ChatOpenAI(streaming=True, model_name=model_name, callbacks=[StreamingStdOutCallbackHandler()], temperature=temperature)
+    streaming_llm = ChatOpenAI(
+        streaming=True,
+        model_name=model_name,
+        callbacks=[StreamingStdOutCallbackHandler()],
+        temperature=temperature,
+    )
 
     question_generator = LLMChain(
-        llm=llm,
-        prompt=CONDENSE_QUESTION_PROMPT,
-        verbose=verbose
+        llm=llm, prompt=CONDENSE_QUESTION_PROMPT, verbose=verbose
     )
     doc_chain = load_qa_chain(
         streaming_llm,

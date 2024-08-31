@@ -259,4 +259,4 @@ class DiscordBot(commands.Bot):
 load_dotenv()
 
 bot = DiscordBot()
-bot.run(os.getenv("TOKEN"))
+bot.run(os.getenv("SECRET__DISCORD_TOKEN"))
