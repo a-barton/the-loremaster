@@ -84,13 +84,10 @@ class ECS(Construct):
 
         self.task_definition.add_container(
             f"{self.app_name}Container",
-            image=ecs.ContainerImage.from_asset("/home/mantid/the-loremaster/"),
-            # image=ecs.ContainerImage.from_asset(
-            #     directory=os.path.join(
-            #         os.path.dirname(__file__), "..", ".."
-            #     )  # Reference Dockerfile in root of repo
-            # ),
-            # image=ecs.ContainerImage.from_registry("docker.io/python:3.9-slim-buster"),
+            # image=ecs.ContainerImage.from_asset("/home/mantid/the-loremaster/"),
+            image=ecs.ContainerImage.from_registry(
+                "docker.io/mantidau/the-loremaster:latest"
+            ),
             container_name=self.app_name,
             memory_limit_mib=512,
             cpu=256,
@@ -120,11 +117,18 @@ class ECS(Construct):
             },
         )
 
-        for ssm_secure_param in config.secrets.values():
+        for secret_name, ssm_secure_param in config.secrets.items():
             self.task_definition.default_container.add_secret(
-                name=ssm_secure_param.parameter_name,
+                name=secret_name,
                 secret=ecs.Secret.from_ssm_parameter(ssm_secure_param),
             )
+
+        self.task_definition.default_container.add_to_execution_policy(
+            iam.PolicyStatement(
+                actions=["secretsmanager:GetSecretValue"],
+                resources=[storage.rds_creds_secret.secret_arn],
+            )
+        )
 
         self.fargate_service = ecs.FargateService(
             self,
@@ -132,7 +136,10 @@ class ECS(Construct):
             cluster=self.cluster,
             task_definition=self.task_definition,
             capacity_provider_strategies=[
-                ecs.CapacityProviderStrategy(capacity_provider="FARGATE_SPOT")
+                ecs.CapacityProviderStrategy(
+                    capacity_provider="FARGATE_SPOT",
+                    weight=1,
+                )
             ],
             desired_count=1,
             security_groups=[self.security_groups.ecs_sg],

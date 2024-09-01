@@ -1,3 +1,4 @@
+import json
 from aws_cdk import (
     Stack,
     aws_rds as rds,
@@ -7,6 +8,7 @@ from aws_cdk import (
     RemovalPolicy,
     aws_iam as iam,
     aws_lambda as lambda_,
+    aws_logs as logs,
     custom_resources as cr,
 )
 from constructs import Construct
@@ -47,7 +49,13 @@ class StorageStack(Stack):
             description="Store RDS credentials",
             secret_name=f"{self.app_name}RDSCredsSecret",
             generate_secret_string=secretsmanager.SecretStringGenerator(
-                secret_string_template=f"username={username},password={{password}},dbname={dbname}",  # Double {{}} around password which will be replaced with actual generated password
+                secret_string_template=json.dumps(
+                    {
+                        "username": username,
+                        "password": "{password}",
+                        "dbname": dbname,
+                    }
+                ),
                 generate_string_key="password",
                 password_length=16,
                 exclude_characters="'@/\"",
@@ -107,13 +115,18 @@ class StorageStack(Stack):
             code=lambda_.Code.from_asset(code_asset_path),
             vpc=networking.vpc_construct.vpc,
             security_groups=[networking.security_groups.pgvector_lambda_sg],
+            log_group=logs.LogGroup(
+                self,
+                f"{self.app_name}PGVectorLambdaLogGroup",
+                log_group_name=f"{self.app_name}PGVectorLambdaLogGroup",
+                retention=logs.RetentionDays.ONE_WEEK,
+            ),
         )
 
         self.custom_resource_provider = cr.Provider(
             self,
             f"{self.app_name}CustomResourceProvider",
             on_event_handler=self.pgvector_lambda,
-            role=self.pgvector_lambda_role,
             vpc=networking.vpc_construct.vpc,
             security_groups=[networking.security_groups.pgvector_lambda_sg],
         )

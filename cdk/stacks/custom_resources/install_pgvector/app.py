@@ -20,7 +20,7 @@ def handler(event, context):
     cur = conn.cursor()
 
     # Execute PGVector extension installation
-    cur.execute("CREATE EXTENSION IF NOT EXISTS pgvector")
+    cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
     # Close the cursor and connection
     cur.close()

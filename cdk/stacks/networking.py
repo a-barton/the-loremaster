@@ -26,6 +26,7 @@ class NetworkingStack(Stack):
             app_name=self.app_name,
             vpc=self.vpc_construct.vpc,
         )
+        self.security_groups.add_sg_rules()
 
 
 ################
@@ -85,8 +86,6 @@ class SecurityGroupConstruct(Construct):
             description="Allow outbound traffic to RDS cluster",
         )
 
-        self.add_sg_rules()
-
     def create_sg(self, name: str, description: str) -> ec2.SecurityGroup:
         return ec2.SecurityGroup(
             self,
@@ -97,19 +96,46 @@ class SecurityGroupConstruct(Construct):
             allow_all_outbound=False,
         )
 
+    # def add_sg_rules(self):
+    #     self.rds_sg.add_ingress_rule(
+    #         peer=ec2.Peer.security_group_id(self.ecs_sg.security_group_id),
+    #         connection=ec2.Port.tcp(5432),
+    #         description="Allow inbound traffic from ECS task",
+    #     )
+    #     self.rds_sg.add_ingress_rule(
+    #         peer=ec2.Peer.security_group_id(self.pgvector_lambda_sg.security_group_id),
+    #         connection=ec2.Port.tcp(5432),
+    #         description="Allow inbound traffic from PGVector installation Lambda",
+    #     ),
+    #     self.ecs_sg.add_egress_rule(
+    #         peer=ec2.Peer.security_group_id(self.rds_sg.security_group_id),
+    #         connection=ec2.Port.tcp(5432),
+    #         description="Allow outbound traffic to RDS database",
+    #     )
+    #     self.ecs_sg.add_egress_rule(
+    #         peer=ec2.Peer.any_ipv4(),
+    #         connection=ec2.Port.tcp(443),
+    #         description="Allow outbound HTTPS traffic to internet (for Discord bot)",
+    #     )
+    #     self.pgvector_lambda_sg.add_egress_rule(
+    #         peer=ec2.Peer.security_group_id(self.rds_sg.security_group_id),
+    #         connection=ec2.Port.tcp(5432),
+    #         description="Allow outbound traffic to RDS cluster",
+    #     )
+
     def add_sg_rules(self):
         self.rds_sg.add_ingress_rule(
-            peer=ec2.Peer.security_group_id(self.ecs_sg.security_group_id),
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(5432),
             description="Allow inbound traffic from ECS task",
         )
         self.rds_sg.add_ingress_rule(
-            peer=ec2.Peer.security_group_id(self.pgvector_lambda_sg.security_group_id),
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(5432),
             description="Allow inbound traffic from PGVector installation Lambda",
         ),
         self.ecs_sg.add_egress_rule(
-            peer=ec2.Peer.security_group_id(self.rds_sg.security_group_id),
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(5432),
             description="Allow outbound traffic to RDS database",
         )
@@ -119,7 +145,7 @@ class SecurityGroupConstruct(Construct):
             description="Allow outbound HTTPS traffic to internet (for Discord bot)",
         )
         self.pgvector_lambda_sg.add_egress_rule(
-            peer=ec2.Peer.security_group_id(self.rds_sg.security_group_id),
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(5432),
             description="Allow outbound traffic to RDS cluster",
         )
