@@ -54,9 +54,6 @@ class StorageStack(Stack):
             ),
         )
 
-        print(networking.vpc_construct.vpc.isolated_subnets)
-        for subnet in networking.vpc_construct.vpc.isolated_subnets:
-            print(subnet)
         self.rds_cluster = rds.ServerlessCluster(
             self,
             f"{self.app_name}RDSCluster",

@@ -84,12 +84,13 @@ class ECS(Construct):
 
         self.task_definition.add_container(
             f"{self.app_name}Container",
+            image=ecs.ContainerImage.from_asset("/home/mantid/the-loremaster/"),
             # image=ecs.ContainerImage.from_asset(
             #     directory=os.path.join(
             #         os.path.dirname(__file__), "..", ".."
             #     )  # Reference Dockerfile in root of repo
             # ),
-            image=ecs.ContainerImage.from_registry("docker.io/python:3.9-slim-buster"),
+            # image=ecs.ContainerImage.from_registry("docker.io/python:3.9-slim-buster"),
             container_name=self.app_name,
             memory_limit_mib=512,
             cpu=256,
@@ -130,6 +131,9 @@ class ECS(Construct):
             f"{self.app_name}FargateService",
             cluster=self.cluster,
             task_definition=self.task_definition,
+            capacity_provider_strategies=[
+                ecs.CapacityProviderStrategy(capacity_provider="FARGATE_SPOT")
+            ],
             desired_count=1,
             security_groups=[self.security_groups.ecs_sg],
             vpc_subnets=ec2.SubnetSelection(
