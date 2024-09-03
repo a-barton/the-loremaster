@@ -2,32 +2,40 @@ import psycopg2
 import boto3
 from botocore.exceptions import ClientError
 import json
+import os
 
 
 def handler(event, context):
-    db_creds_secret_name = event.get("DB_CREDS_SECRET_NAME")
-    db_creds = get_secret(db_creds_secret_name)
+    try:
+        print("EVENT RECEIVED:")
+        print(json.dumps(event))
+        db_creds_secret_name = os.environ.get("DB_CREDS_SECRET_NAME")
+        db_creds = get_secret(db_creds_secret_name)
 
-    # Connect to RDS
-    conn = psycopg2.connect(
-        dbname=db_creds["dbname"],
-        user=db_creds["username"],
-        password=db_creds["password"],
-        host=db_creds["host"],
-        port=db_creds["port"],
-    )
+        # Connect to RDS
+        conn = psycopg2.connect(
+            dbname=db_creds["dbname"],
+            user=db_creds["username"],
+            password=db_creds["password"],
+            host=db_creds["host"],
+            port=db_creds["port"],
+        )
 
-    cur = conn.cursor()
+        cur = conn.cursor()
 
-    # Execute PGVector extension installation
-    cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        # Execute PGVector extension installation
+        cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
-    # Close the cursor and connection
-    cur.close()
-    conn.close()
+        # Close the cursor and connection
+        cur.close()
+        conn.close()
+    
+        return {"statusCode": 200}
 
-    # Return the rows
-    return {"statusCode": 200}
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return {"statusCode": 500, "body": str(e)}
+    
 
 
 def get_secret(secret_name: str) -> dict:

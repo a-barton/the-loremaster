@@ -146,6 +146,6 @@ class ECS(Construct):
             vpc_subnets=ec2.SubnetSelection(
                 subnets=networking.vpc_construct.vpc.public_subnets
             ),
-            assign_public_ip=False,
+            assign_public_ip=True, # Needs to be enabled for ECS task to have outbound internet access
             enable_execute_command=True,
         )

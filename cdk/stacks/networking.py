@@ -42,7 +42,7 @@ class VPCConstruct(Construct):
             f"{app_name}VPC",
             ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
             max_azs=2,
-            nat_gateways=1,
+            nat_gateways=0,
             subnet_configuration=[
                 ec2.SubnetConfiguration(
                     name="Public",
@@ -148,4 +148,9 @@ class SecurityGroupConstruct(Construct):
             peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
             connection=ec2.Port.tcp(5432),
             description="Allow outbound traffic to RDS cluster",
+        )
+        self.pgvector_lambda_sg.add_egress_rule(
+            peer=ec2.Peer.any_ipv4(),
+            connection=ec2.Port.tcp(443),
+            description="Allow outbound HTTPS traffic to internet (for Secrets Manager public API)",
         )

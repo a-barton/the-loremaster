@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_logs as logs,
     custom_resources as cr,
 )
+import aws_cdk as cdk
 from constructs import Construct
 from .networking import NetworkingStack
 
@@ -37,6 +38,7 @@ class StorageStack(Stack):
 
         self.create_pgvector_installation_custom_resource(
             code_asset_path="stacks/custom_resources/install_pgvector",
+            handler="install_pgvector.handler",
             networking=networking,
         )
 
@@ -84,7 +86,7 @@ class StorageStack(Stack):
         )
 
     def create_pgvector_installation_custom_resource(
-        self, code_asset_path: str, networking: NetworkingStack
+        self, code_asset_path: str, handler: str, networking: NetworkingStack
     ):
         self.pgvector_lambda_role = iam.Role(
             self,
@@ -102,6 +104,11 @@ class StorageStack(Stack):
                     f"{self.app_name}PGVectorLambdaRoleVPCAccessPolicy",
                     managed_policy_arn="arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
                 ),
+                iam.PolicyStatement(
+                    actions=["secretsmanager:GetSecret"],
+                    resources=[self.rds_creds_secret.secret_arn],
+
+                ),
             ],
         )
 
@@ -111,8 +118,11 @@ class StorageStack(Stack):
             function_name=f"{self.app_name}PGVectorLambda",
             runtime=lambda_.Runtime.PYTHON_3_10,
             role=self.pgvector_lambda_role,
-            handler="pgvector_lambda.lambda_handler",
+            handler=handler,
             code=lambda_.Code.from_asset(code_asset_path),
+            environment={
+                "DB_CREDS_SECRET_NAME": self.rds_creds_secret.secret_name,
+            },
             vpc=networking.vpc_construct.vpc,
             security_groups=[networking.security_groups.pgvector_lambda_sg],
             log_group=logs.LogGroup(
@@ -122,6 +132,7 @@ class StorageStack(Stack):
                 retention=logs.RetentionDays.ONE_WEEK,
             ),
         )
+        self.pgvector_lambda.node.add_dependency(self.rds_cluster)
 
         self.custom_resource_provider = cr.Provider(
             self,
@@ -130,3 +141,20 @@ class StorageStack(Stack):
             vpc=networking.vpc_construct.vpc,
             security_groups=[networking.security_groups.pgvector_lambda_sg],
         )
+        self.custom_resource_provider.node.add_dependency(self.rds_cluster)
+        self.custom_resource_provider.node.add_dependency(self.pgvector_lambda)
+        
+
+        self.custom_resource = cdk.CustomResource(
+            self,
+            f"{self.app_name}PGVectorInstallationCustomResource",
+            service_token=self.custom_resource_provider.service_token,
+            resource_type="Custom::PGVectorInstallation",
+            properties={
+                "FunctionName": self.pgvector_lambda.function_name,
+            },
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+        self.custom_resource.node.add_dependency(self.rds_cluster)
+        self.custom_resource.node.add_dependency(self.pgvector_lambda)
+        self.custom_resource.node.add_dependency(self.custom_resource_provider)
