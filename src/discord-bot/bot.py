@@ -17,13 +17,30 @@ import aiosqlite
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 if not os.path.isfile(f"{os.path.realpath(os.path.dirname(__file__))}/config.json"):
     sys.exit("'config.json' not found! Please add it and try again.")
 else:
     with open(f"{os.path.realpath(os.path.dirname(__file__))}/config.json") as file:
         config = json.load(file)
+
+# Load env vars and secrets from .env file
+# for env_var, value in dotenv_values(".env").items():
+#     config[env_var] = value
+
+config["OPENAI_API_KEY"] = os.getenv("SECRET__OPENAI_API_KEY")
+config["NOTION_TOKEN"] = os.getenv("SECRET__NOTION_TOKEN")
+config["DISCORD_TOKEN"] = os.getenv("SECRET__DISCORD_TOKEN")
+config["NOTION_DATABASE_ID"] = os.getenv("NOTION_DATABASE_ID" )
+config["CHUNK_SIZE"] = os.getenv("CHUNK_SIZE")
+config["CHUNK_OVERLAP"] = os.getenv("CHUNK_OVERLAP")
+config["COLLECTION_NAME"] = os.getenv("COLLECTION_NAME")
+config["POSTGRES_USER"] = os.getenv("POSTGRES_USER")
+config["POSTGRES_PASSWORD"] = os.getenv("POSTGRES_PASSWORD")
+config["POSTGRES_DBNAME"] = os.getenv("POSTGRES_DBNAME")
+config["POSTGRES_HOST"] = os.getenv("POSTGRES_HOST")
+config["POSTGRES_PORT"] = os.getenv("POSTGRES_PORT")
 
 """	
 Setup bot intents (events restrictions)
@@ -259,4 +276,4 @@ class DiscordBot(commands.Bot):
 load_dotenv()
 
 bot = DiscordBot()
-bot.run(os.getenv("SECRET__DISCORD_TOKEN"))
+bot.run(config["DISCORD_TOKEN"])

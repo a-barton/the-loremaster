@@ -80,6 +80,9 @@ class ECS(Construct):
         self.task_definition = ecs.FargateTaskDefinition(
             self,
             f"{self.app_name}TaskDefinition",
+            cpu=1024,
+            memory_limit_mib=2048,
+            ephemeral_storage_gib=30,
         )
 
         self.task_definition.add_container(
@@ -89,8 +92,8 @@ class ECS(Construct):
                 "docker.io/mantidau/the-loremaster:latest"
             ),
             container_name=self.app_name,
-            memory_limit_mib=512,
-            cpu=256,
+            memory_limit_mib=2048,
+            cpu=1024,
             essential=True,
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"{self.app_name}Task",
@@ -106,7 +109,7 @@ class ECS(Construct):
                     secret=storage.rds_creds_secret, field="password"
                 ),
                 "POSTGRES_HOST": ecs.Secret.from_secrets_manager(
-                    secret=storage.rds_creds_secret, field="hostname"
+                    secret=storage.rds_creds_secret, field="host"
                 ),
                 "POSTGRES_DBNAME": ecs.Secret.from_secrets_manager(
                     secret=storage.rds_creds_secret, field="dbname"

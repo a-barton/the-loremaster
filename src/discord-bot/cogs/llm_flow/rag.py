@@ -31,6 +31,7 @@ QA_PROMPT = PromptTemplate(
 
 async def prompt_rag_flow(
     query,
+    config,
     model_name="gpt-4o",
     temperature=0.5,
     k=5,
@@ -39,32 +40,27 @@ async def prompt_rag_flow(
     verbose=False,
 ) -> Dict[str, Any]:
 
-    load_dotenv()
-    COLLECTION_NAME = os.getenv("COLLECTION_NAME")
-    POSTGRES_USER = os.getenv("POSTGRES_USER")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-    POSTGRES_DBNAME = os.getenv("POSTGRES_DBNAME")
-    POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-    POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-
     """Establish vector DB and retriever"""
+    print("rag.py -- Establishing vector DB")
     embeddings = HuggingFaceEmbeddings()
-    collection_name = COLLECTION_NAME
+    collection_name = config["COLLECTION_NAME"]
     vectors = PGVector.from_existing_index(
         embedding=embeddings,
         collection_name=collection_name,
-        connection_string=f"postgresql+psycopg2://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DBNAME}",
+        connection_string=f"postgresql+psycopg2://{config['POSTGRES_USER']}:{config['POSTGRES_PASSWORD']}@{config['POSTGRES_HOST']}:{config['POSTGRES_PORT']}/{config['POSTGRES_DBNAME']}",
     )
     retriever = vectors.as_retriever(search_type=search_type, search_kwargs={"k": k})
 
     # Construct a ConversationalRetrievalChain with a streaming llm for combine docs
     # and a separate, non-streaming llm for question generation
-    llm = ChatOpenAI(temperature=temperature, model_name=model_name)
+    print("rag.py -- Establishing OpenAI connection")
+    llm = ChatOpenAI(temperature=temperature, model_name=model_name, api_key=config["OPENAI_API_KEY"])
     streaming_llm = ChatOpenAI(
         streaming=True,
         model_name=model_name,
         callbacks=[StreamingStdOutCallbackHandler()],
         temperature=temperature,
+        api_key=config["OPENAI_API_KEY"],
     )
 
     question_generator = LLMChain(

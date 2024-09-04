@@ -13,7 +13,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
-from .llm_flow.rag import prompt_rag_flow
+from .llm_flow import rag
+from dotenv import load_dotenv
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
@@ -114,8 +115,11 @@ class General(commands.Cog, name="general"):
         description="Ask the Loremaster something about The Red Moon Saga."
     )
     async def lore(self, context: Context):
+        if context.message.channel.name != self.bot.config["channel"]:
+            return
+        print("/lore command triggered")
         question = context.message.content.split("lore", 1)[1]
-        response = await prompt_rag_flow(question)
+        response = await rag.prompt_rag_flow(query=question, config=self.bot.config)
         reply_content = f"```{response}```"
         message_max_length = 2000
         if len(response) > (message_max_length - 6): #subtract 6 characters for backticks to put content in quote block
