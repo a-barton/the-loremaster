@@ -4,7 +4,6 @@ Sourced from https://github.com/johntday/notion-load/blob/main/notion_load/load_
 
 from typing import List
 
-import requests
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
@@ -36,6 +35,10 @@ def split_documents(documents, verbose=False) -> List[Document]:
     )
 
     document_chunks = text_splitter.split_documents(clean_documents)
+
+    # Add metadata field to identify this as a chunk (rather than a full document)
+    for doc in document_chunks:
+        doc.metadata["embedding_type"] = "chunk"
 
     if verbose:
         print("\n")
