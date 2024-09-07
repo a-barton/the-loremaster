@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict
 import psycopg2
 from psycopg2.extras import NamedTupleCursor
@@ -12,10 +11,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
-
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains.query_constructor.base import AttributeInfo
-from langchain.retrievers.self_query.base import SelfQueryRetriever
 
 from langchain_community.chat_models import ChatOpenAI
 
@@ -65,7 +60,7 @@ async def prompt_rag_flow(
     verbose=False,
 ) -> Dict[str, Any]:
 
-    """Establish vector DB and retriever"""
+    # Establish vector DB and retriever
     print("rag.py -- Establishing vector DB")
     embeddings = HuggingFaceEmbeddings()
     collection_name = config["COLLECTION_NAME"]
@@ -121,6 +116,7 @@ async def prompt_rag_flow_last_session(
 
     collection_name = config["COLLECTION_NAME"]
     
+    # Connect directly to vector DB to retrieve documents based on metadata rather than vector search
     conn = psycopg2.connect(
         host=config["POSTGRES_HOST"],
         user=config["POSTGRES_USER"],
@@ -130,6 +126,7 @@ async def prompt_rag_flow_last_session(
     )
     cur = conn.cursor(cursor_factory=NamedTupleCursor)
 
+    # Retrieve the most recent session summary
     cur.execute(
         f"""
         SELECT embeddings.*
@@ -144,6 +141,7 @@ async def prompt_rag_flow_last_session(
 
     last_session_summary = cur.fetchone().document
 
+    # Retrieve the next most recent n sessions summaries
     cur.execute(
         f"""
         SELECT embeddings.*
@@ -159,6 +157,7 @@ async def prompt_rag_flow_last_session(
         """
     )
 
+    # Join previous session summaries into a contiguous string in prepartion for prompt injection
     previous_session_summaries = "\n".join([
         f"-- SESSION {row.cmetadata['session_number']} -- \n{row.document}"
         for row in cur.fetchall() 

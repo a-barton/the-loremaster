@@ -69,7 +69,6 @@ class General(commands.Cog, name="general"):
     @commands.hybrid_command(
         name="help", description="List all commands the bot has loaded."
     )
-    #@app_commands.guilds(discord.Object(id=869915828097802311))
     async def help(self, context: Context) -> None:
         prefix = self.bot.config["prefix"]
         embed = discord.Embed(
@@ -144,20 +143,6 @@ class General(commands.Cog, name="general"):
         MAX_LENGTH = 2000
         CHUNK_SIZE = MAX_LENGTH - 6 # Reserve 6 characters for backticks for quote block
         LINE_BREAKS_PER_CHUNK = 20
-
-        # sentences = re.split(r"(?<=[\.\!\?])\s+", text)
-
-        # chunks = []
-        # current_chunk = ""
-        # current_length = 0
-
-        # for sentence in sentences:
-        #     if current_length + len(sentence) > CHUNK_SIZE:
-        #         chunks.append(f"```{current_chunk.strip()}```")
-        #         current_chunk = ""
-        #         current_length = 0
-        #     current_chunk += sentence + " "
-        #     current_length += len(sentence) + 1
 
         lines = text.split("\n")
 

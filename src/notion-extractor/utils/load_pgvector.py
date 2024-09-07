@@ -4,11 +4,9 @@ Adapted from https://github.com/johntday/notion-load/blob/main/notion_load/qdran
 
 import os
 import re
-import uuid
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores.pgvector import PGVector
-from langchain.schema import Document
 
 from .MyNotionDBLoader import MyNotionDBLoader
 
@@ -68,18 +66,3 @@ def load_pgvector(args):
 
     db.add_documents(documents=chunked_docs)
     db.add_documents(documents=original_docs)
-    
-    # db = PGVector.from_documents(
-    #     embedding=embeddings_model,
-    #     documents=chunked_docs,  # [d for d in chunked_docs],
-    #     collection_name=COLLECTION_NAME,
-    #     connection_string=connection_string,
-    # )
-
-    # id_key = "doc_id"
-    # doc_ids = [uuid.uuid4().hex for _ in range(len(chunked_docs))]
-    # documents_with_ids = [
-    #     Document(page_content=doc.page_content, metadata=doc.metadata)#metadata={"id": doc_id})
-    #     for doc, doc_id in zip(original_docs, doc_ids)
-    # ]
-    # db.add_documents(documents_with_ids)

@@ -199,18 +199,6 @@ class MyNotionDBLoader(BaseLoader):
 
         return pages
 
-    # def _retrieve_page_ids(
-    #         self,
-    #         query_dict: Dict[str, Any] = QUERY_DICT
-    # ) -> List[str]:
-    #     """Get page ids"""
-    #     pages = self._retrieve_pages(query_dict)
-    #
-    #     page_ids = [page["id"] for page in pages]
-    #     print(f"Found {len(page_ids)} pages in Notion database {self.database_id}\n")
-    #
-    #     return page_ids
-
     def duplicates(
             self,
             query_dict: Dict[str, Any] = {}
@@ -235,13 +223,13 @@ class MyNotionDBLoader(BaseLoader):
         # load properties as metadata
         metadata: Dict[str, Any] = {}
 
-        """ extract metadata """
+        # Extract metadata
         _read_metadata(page_id, page_summary, metadata)
 
-        """ load all blocks of content """
+        # Load all blocks of content
         page_content = self._load_blocks(block_id=page_id)
 
-        """ validate """
+        # Validate presence of page content and of metadata keys
         if not page_content and self.validate_missing_content:
             raise ValueError(f"No content found for page_id: '{page_id}', metadata: '{metadata}'")
         if self.validate_missing_metadata:
@@ -250,22 +238,14 @@ class MyNotionDBLoader(BaseLoader):
                     raise ValueError(
                         f"Missing metadata: '{missing_metadata}' for page_id: '{page_id}', metadata: '{metadata}'")
 
-        """ check status """
+        # Check status of page
         if 'status' in metadata and metadata["status"] in ["Archived", "Indexed"]:
             return []
 
-        """ filter metadata """
-        print(f"Metadata PRE-FILTER: {str(metadata)}")
+        # Filter metadata
         metadata_filtered = {k: v for k, v in metadata.items() if any(x == k for x in self.metadata_filter_list)}
 
-        if is_pdf:
-            """ get notion url to pdf and extract content """
-            print(f"Loading PDF '{metadata}'\n")
-            print(f"page_content: {page_content}\n") if self.verbose else None
-            docs = _get_pdf_content(page_content, page_id, verbose=self.verbose)
-            return [Document(page_content=doc.page_content, metadata=metadata_filtered) for doc in docs]
-        else:
-            print(f"Loading Notion Page '{metadata_filtered}'\n")
+        print(f"Loading Notion Page '{metadata_filtered}'\n")
 
         return [Document(page_content=page_content, metadata=metadata_filtered)]
 

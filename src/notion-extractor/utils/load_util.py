@@ -4,7 +4,6 @@ Sourced from https://github.com/johntday/notion-load/blob/main/notion_load/load_
 
 from typing import List
 
-import requests
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
