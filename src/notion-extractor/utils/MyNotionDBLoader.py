@@ -96,6 +96,10 @@ def _read_metadata(page_id: str,
             value = (
                 prop_data["created_time"]
             )
+        elif prop_type == "last_edited_time":
+            value = (
+                prop_data["last_edited_time"]
+            )
         elif prop_type == "formula":
             value = (
                 prop_data["formula"]
@@ -251,6 +255,7 @@ class MyNotionDBLoader(BaseLoader):
             return []
 
         """ filter metadata """
+        print(f"Metadata PRE-FILTER: {str(metadata)}")
         metadata_filtered = {k: v for k, v in metadata.items() if any(x == k for x in self.metadata_filter_list)}
 
         if is_pdf:

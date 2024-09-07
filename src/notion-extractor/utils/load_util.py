@@ -37,6 +37,10 @@ def split_documents(documents, verbose=False) -> List[Document]:
 
     document_chunks = text_splitter.split_documents(clean_documents)
 
+    # Add metadata field to identify this as a chunk (rather than a full document)
+    for doc in document_chunks:
+        doc.metadata["embedding_type"] = "chunk"
+
     if verbose:
         print("\n")
         for doc in document_chunks:

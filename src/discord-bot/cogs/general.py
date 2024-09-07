@@ -6,15 +6,12 @@ Description:
 Version: 6.2.0
 """
 
-import platform
-
-import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context
 from .llm_flow import rag
-from dotenv import load_dotenv
+import re
 
 class General(commands.Cog, name="general"):
     def __init__(self, bot) -> None:
@@ -129,8 +126,59 @@ class General(commands.Cog, name="general"):
             reply_content = f"```{trimmed_response}```"
         
         await context.message.reply(reply_content)
-                            
 
+    @commands.hybrid_command(
+        name="last-session",
+        description="Ask the Loremaster to recount the tale of the events that happened last session."
+    )
+    async def last_session(self, context: Context):
+        if context.message.channel.name != self.bot.config["channel"]:
+            return
+        print("/last-session command triggered")
+        response = await rag.prompt_rag_flow_last_session(config=self.bot.config)
+        response_chunks = await self.chunk_message_content(response)
+        for chunk in response_chunks:
+            await context.message.reply(chunk)
+
+    async def chunk_message_content(self, text):
+        MAX_LENGTH = 2000
+        CHUNK_SIZE = MAX_LENGTH - 6 # Reserve 6 characters for backticks for quote block
+        LINE_BREAKS_PER_CHUNK = 20
+
+        # sentences = re.split(r"(?<=[\.\!\?])\s+", text)
+
+        # chunks = []
+        # current_chunk = ""
+        # current_length = 0
+
+        # for sentence in sentences:
+        #     if current_length + len(sentence) > CHUNK_SIZE:
+        #         chunks.append(f"```{current_chunk.strip()}```")
+        #         current_chunk = ""
+        #         current_length = 0
+        #     current_chunk += sentence + " "
+        #     current_length += len(sentence) + 1
+
+        lines = text.split("\n")
+
+        chunks = []
+        current_chunk = ""
+        current_length = 0
+        current_line_count = 0
+
+        for line in lines:
+            if current_length + len(line) + current_line_count * LINE_BREAKS_PER_CHUNK > CHUNK_SIZE:
+                chunks.append(f"```{current_chunk.strip()}```")
+                current_chunk = ""
+                current_length = 0
+            current_chunk += line + "\n"
+            current_length += len(line) + 1
+            current_line_count += 1
+        
+        if current_chunk:
+            chunks.append(f"```{current_chunk.strip()}```")
+
+        return chunks
 
 async def setup(bot) -> None:
     await bot.add_cog(General(bot))
