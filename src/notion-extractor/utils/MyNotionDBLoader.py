@@ -18,29 +18,13 @@ PAGE_URL = NOTION_BASE_URL + "/pages/{page_id}"
 BLOCK_URL = NOTION_BASE_URL + "/blocks/{block_id}/children"
 QUERY_DICT = {
     # "filter": {
-    #     "or": [
-    #         {
-    #             "property": "Name",
-    #             "rich_text": {
-    #                 "contains": "Returning the lute"
-    #             }
-    #         }
-    #     ]
+    #     "property": "Tags",
+    #     "multi_select": {
+    #         "contains": "TestTag"
+    #     }
     # },
     "page_size": 100,
 }
-
-
-def _get_pdf_content(url_str: str,
-                     page_id: str,
-                     verbose: bool
-                     ) -> List[Document]:
-    if url_str.startswith("http"):
-        loader = MyPyPDFLoader(url_str, verbose=verbose)
-        pages = loader.load()
-        return pages
-    raise ValueError(f"Invalid URL of pdf: '{url_str}' at page_id: '{page_id}'")
-
 
 def _read_metadata(page_id: str,
                    page_summary: Dict[str, Any],
@@ -217,7 +201,6 @@ class MyNotionDBLoader(BaseLoader):
                   page_summary: Dict[str, Any]
                   ) -> List[Document]:
         """Read a page."""
-        is_pdf = False
         page_id = page_summary["id"]
 
         # load properties as metadata
@@ -247,7 +230,7 @@ class MyNotionDBLoader(BaseLoader):
 
         print(f"Loading Notion Page '{metadata_filtered}'\n")
 
-        return [Document(page_content=page_content, metadata=metadata_filtered)]
+        return [Document(id=page_id, page_content=page_content, metadata=metadata_filtered)]
 
     def _load_blocks(self,
                      block_id: str,
