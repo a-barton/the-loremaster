@@ -5,6 +5,7 @@ python-dotenv
 requests
 langchain
 langchain-community
+langchain-postgres
 langchain-huggingface
 pypdf
 pdfminer.six
@@ -12,6 +13,6 @@ tiktoken
 pandas
 beautifulsoup4
 openai
-psycopg2-binary
+psycopg[binary]
 pgvector
 #llama-cpp-python

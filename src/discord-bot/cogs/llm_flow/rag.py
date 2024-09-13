@@ -1,12 +1,14 @@
 from typing import Any, Dict
-import psycopg2
-from psycopg2.extras import NamedTupleCursor
+import psycopg
+from psycopg.rows import namedtuple_row
 
 from langchain.chains.llm import LLMChain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains.question_answering import load_qa_chain
 
-from langchain_community.vectorstores.pgvector import PGVector
+#from langchain_community.vectorstores.pgvector import PGVector
+from langchain_postgres import PGVector
+from langchain_postgres.vectorstores import PGVector
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
@@ -67,7 +69,7 @@ async def prompt_rag_flow(
     vectors = PGVector.from_existing_index(
         embedding=embeddings,
         collection_name=collection_name,
-        connection_string=f"postgresql+psycopg2://{config['POSTGRES_USER']}:{config['POSTGRES_PASSWORD']}@{config['POSTGRES_HOST']}:{config['POSTGRES_PORT']}/{config['POSTGRES_DBNAME']}",
+        connection=f"postgresql+psycopg://{config['POSTGRES_USER']}:{config['POSTGRES_PASSWORD']}@{config['POSTGRES_HOST']}:{config['POSTGRES_PORT']}/{config['POSTGRES_DBNAME']}",
     )
 
     retriever = vectors.as_retriever(search_type=search_type, search_kwargs={"k": k, "filter": {"embedding_type":"document"}})
@@ -117,14 +119,14 @@ async def prompt_rag_flow_last_session(
     collection_name = config["COLLECTION_NAME"]
     
     # Connect directly to vector DB to retrieve documents based on metadata rather than vector search
-    conn = psycopg2.connect(
+    conn = psycopg.connect(
         host=config["POSTGRES_HOST"],
         user=config["POSTGRES_USER"],
         password=config["POSTGRES_PASSWORD"],
         port=config["POSTGRES_PORT"],
         dbname=config["POSTGRES_DBNAME"]
     )
-    cur = conn.cursor(cursor_factory=NamedTupleCursor)
+    cur = conn.cursor(row_factory=namedtuple_row)
 
     # Retrieve the most recent session summary
     cur.execute(

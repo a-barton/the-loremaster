@@ -19,6 +19,9 @@ def cli():
     parser.add_argument("target",
                         choices=['pgvector'],
                         help="target can only be 'pgvector'")
+    parser.add_argument("-i", "--incremental",
+                        help="perform incremental load of new docs into existing vector DB",
+                        action="store_true")
     parser.add_argument("-v", "--verbose",
                         help="verbose logging",
                         action="store_true")
@@ -43,7 +46,6 @@ def cli():
 
 
 if __name__ == '__main__':
-    load_dotenv()
 
     args = cli()
 
