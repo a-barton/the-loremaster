@@ -130,6 +130,15 @@ async def prompt_rag_flow_last_session(
 
     # Retrieve the most recent session summary
     cur.execute(
+        # f"""
+        # SELECT embeddings.*
+        # FROM langchain_pg_embedding embeddings
+        # JOIN langchain_pg_collection collection
+        #     ON embeddings.collection_id = collection.uuid
+        # WHERE collection.name = '{collection_name}'
+        # AND embeddings.cmetadata->>'name' LIKE 'Session Notes%'
+        # AND (embeddings.cmetadata->>'is_latest')::boolean = true;
+        # """
         f"""
         SELECT embeddings.*
         FROM langchain_pg_embedding embeddings
@@ -137,7 +146,9 @@ async def prompt_rag_flow_last_session(
             ON embeddings.collection_id = collection.uuid
         WHERE collection.name = '{collection_name}'
         AND embeddings.cmetadata->>'name' LIKE 'Session Notes%'
-        AND (embeddings.cmetadata->>'is_latest')::boolean = true;
+        AND embeddings.cmetadata->>'embedding_type' = 'document'
+        ORDER BY (embeddings.cmetadata->>'session_number')::INT DESC
+        LIMIT 1;
         """
     )
 
